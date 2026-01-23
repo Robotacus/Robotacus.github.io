@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROBOTACUS // NEXT GEN</title>
+    <title>ROBOTACUS // SYSTEM ACCESS</title>
     <style>
         :root {
-            --bg-color: #000000; /* Pure Black */
-            --terminal-green: #0f0;
+            --bg-color: #000000;
+            --terminal-green: #00ff41; /* Classic Hacker Green */
+            --terminal-dim: #008f11;
             --alert-red: #ff3333;
-            --dim-gray: #333;
             --font-main: 'Courier New', Courier, monospace;
         }
 
@@ -18,180 +18,443 @@
             color: var(--terminal-green);
             font-family: var(--font-main);
             margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll, handle inside terminal */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- CRT EFFECT OVERLAY --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.6;
+        }
+        
+        .screen-flicker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 255, 65, 0.02);
+            opacity: 0;
+            z-index: 998;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.01; }
+            50% { opacity: 0.05; }
+            100% { opacity: 0.01; }
+        }
+
+        /* --- MAIN CONTAINER --- */
+        .terminal-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            border: 2px solid var(--terminal-green);
+            background: #050505;
             padding: 20px;
+            box-shadow: 0 0 20px var(--terminal-dim);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            box-sizing: border-box;
         }
 
-        /* Glitch Title Effect */
+        /* Scrollbar Styling */
+        .terminal-container::-webkit-scrollbar { width: 10px; }
+        .terminal-container::-webkit-scrollbar-track { background: #000; }
+        .terminal-container::-webkit-scrollbar-thumb { background: var(--terminal-green); border: 1px solid #000; }
+
+        /* --- HEADER & GLITCH --- */
+        header {
+            text-align: center;
+            border-bottom: 2px dashed var(--terminal-dim);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
         h1 {
             font-size: 2.5rem;
-            text-transform: uppercase;
-            text-shadow: 2px 2px var(--alert-red);
-            margin-bottom: 10px;
+            margin: 0;
             letter-spacing: 5px;
-            animation: glitch 1s infinite alternate;
+            text-shadow: 2px 2px var(--alert-red);
+            animation: glitch-anim 2s infinite;
         }
 
-        @keyframes glitch {
-            0% { text-shadow: 2px 2px var(--alert-red); }
-            50% { text-shadow: -2px -2px var(--alert-red); opacity: 0.8; }
-            100% { text-shadow: 2px -2px var(--alert-red); }
+        @keyframes glitch-anim {
+            0% { text-shadow: 2px 2px var(--alert-red); transform: translate(0,0); }
+            20% { text-shadow: -2px -2px var(--alert-red); transform: translate(-1px, 1px); }
+            40% { text-shadow: 2px -2px var(--alert-red); transform: translate(1px, -1px); }
+            60% { text-shadow: 2px 2px var(--alert-red); transform: translate(0,0); }
+            100% { text-shadow: 2px 2px var(--alert-red); transform: translate(0,0); }
         }
 
-        .status-line {
-            border-bottom: 1px solid var(--terminal-green);
+        .sys-info {
+            font-size: 0.8rem;
+            color: var(--terminal-dim);
+            margin-top: 5px;
+        }
+
+        /* --- VISUALIZER --- */
+        #visualizer {
             width: 100%;
-            max-width: 600px;
-            text-align: center;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-            font-size: 0.9rem;
+            height: 60px;
+            background: #001100;
+            margin-bottom: 20px;
+            border-left: 1px solid var(--terminal-dim);
+            border-right: 1px solid var(--terminal-dim);
         }
 
-        .blink { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
+        /* --- CONTENT GRID --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex-grow: 1;
+        }
 
-        /* Cover Art Placeholder */
+        @media (max-width: 700px) {
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        /* --- LEFT COLUMN (CONTROLS) --- */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
         .cover-art {
-            width: 300px;
-            height: 300px;
-            border: 2px solid var(--terminal-green);
-            background: #111;
+            width: 100%;
+            aspect-ratio: 1/1;
+            border: 1px solid var(--terminal-green);
+            background: #000;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px var(--terminal-green);
             position: relative;
-            overflow: hidden;
         }
         
         .cover-art img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: none; /* Hidden by default until loaded */
         }
 
-        /* Audio Player Styling */
-        .player-container {
-            width: 100%;
-            max-width: 600px;
-            border: 1px solid var(--dim-gray);
-            padding: 20px;
-            background: #111;
-            margin-bottom: 30px;
-        }
-
-        .track-info {
-            text-align: center;
-            margin-bottom: 15px;
-            color: #fff;
-        }
-
-        audio {
-            width: 100%;
-            filter: invert(100%); 
-        }
-
-        /* Lyrics Terminal */
-        .lyrics-terminal {
-            width: 100%;
-            max-width: 600px;
-            height: 300px;
-            background: #000;
-            border: 1px solid var(--terminal-green);
-            overflow-y: scroll;
-            padding: 15px;
-            box-sizing: border-box;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            color: #ccc;
-        }
-
-        .lyrics-terminal::-webkit-scrollbar {
-            width: 8px;
-        }
-        .lyrics-terminal::-webkit-scrollbar-thumb {
-            background: var(--terminal-green);
-        }
-
-        footer {
-            margin-top: auto;
-            padding-top: 40px;
+        .no-signal {
+            position: absolute;
+            color: var(--terminal-dim);
             font-size: 0.8rem;
-            color: #555;
-            text-align: center;
+            animation: blink 2s infinite;
         }
+
+        /* Custom Buttons */
+        .btn {
+            background: transparent;
+            border: 1px solid var(--terminal-green);
+            color: var(--terminal-green);
+            padding: 10px 15px;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            background: var(--terminal-green);
+            color: #000;
+            box-shadow: 0 0 10px var(--terminal-green);
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: #111;
+            border: 1px solid var(--terminal-dim);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--terminal-green);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* --- RIGHT COLUMN (LYRICS) --- */
+        .lyrics-panel {
+            border: 1px solid var(--terminal-dim);
+            background: rgba(0,20,0,0.5);
+            padding: 15px;
+            overflow-y: auto;
+            height: 100%;
+            max-height: 400px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .section-tag { color: var(--alert-red); font-weight: bold; }
+        
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 20px;
+            border-top: 1px solid var(--terminal-dim);
+            padding-top: 10px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: var(--terminal-dim);
+        }
+
+        .typewriter {
+            display: inline-block;
+            overflow: hidden;
+            border-right: .15em solid var(--terminal-green);
+            white-space: nowrap;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        /* Utilities */
+        .hidden { display: none; }
+        .blink { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
     </style>
 </head>
 <body>
 
-    <h1>ROBOTACUS</h1>
-    <div class="status-line">
-        SYSTEM STATUS: ONLINE <span class="blink">█</span> | LOCATION: ABBOTSFORD_NODE
-    </div>
+    <!-- CRT Visual Effects -->
+    <div class="scanlines"></div>
+    <div class="screen-flicker"></div>
 
-    <div class="cover-art">
-        <img src="cover.jpg" alt="Album Cover" onerror="this.style.display='none'">
-        <div style="position:absolute; z-index:-1;">NO SIGNAL</div> 
-    </div>
+    <div class="terminal-container">
+        
+        <header>
+            <h1>ROBOTACUS</h1>
+            <div class="sys-info">
+                > SYSTEM: ONLINE <br>
+                > USER: AUTHENTICATED <br>
+                > LOCATION: ABBOTSFORD_NODE_04
+            </div>
+        </header>
 
-    <div class="player-container">
-        <div class="track-info">
-            <strong>NOW PLAYING:</strong> NEXT GEN (FINAL VER).mp3
-        </div>
-        <audio controls>
-            <source src="Next Gen.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-    </div>
+        <!-- Audio Visualizer Canvas -->
+        <canvas id="visualizer"></canvas>
 
-    <div class="lyrics-terminal">
-> ACCESSING LYRICS_DB...
-> FILE: "NEXT GEN"
-> LOADING...
+        <div class="content-grid">
+            
+            <!-- CONTROLS & ART -->
+            <div class="controls-panel">
+                <div class="cover-art">
+                    <!-- If you have cover.jpg, it goes here -->
+                    <img src="cover.jpg" onload="this.style.display='block'; this.nextElementSibling.style.display='none'">
+                    <div class="no-signal">[ NO IMAGE SIGNAL ]</div>
+                </div>
 
-[Intro]
+                <div id="player-status" style="font-size: 0.8rem; margin-bottom: 5px;">> STATUS: IDLE</div>
+                
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+
+                <button class="btn" id="play-btn">[ EXECUTE: PLAY_TRACK ]</button>
+                <button class="btn" id="stop-btn">[ TERMINATE: STOP ]</button>
+                
+                <a href="nextgen.mp3" download style="text-decoration:none;">
+                    <button class="btn" style="width:100%; margin-top:10px; border-color:var(--alert-red); color:var(--alert-red);">[ DOWNLOAD: FILE ]</button>
+                </a>
+            </div>
+
+            <!-- LYRICS TERMINAL -->
+            <div class="lyrics-panel" id="lyrics-box">
+> INITIATING LYRICS_PROTOCOL...
+> LOADING FILE: "NEXT GEN.txt"
+> ...
+
+<span class="section-tag">[Intro]</span>
 System online.
 Robotacus on the beat.
 Loading...
 
-[Verse 1]
+<span class="section-tag">[Verse 1]</span>
 You drew the line in the sand
 Permanent marker in your hand
 Said "we’re just friends"
 Made the room go dark again...
 
-[Pre-Chorus]
+<span class="section-tag">[Pre-Chorus]</span>
 So why you blowing up my phone at 3 AM?
 Asking who she is and asking "since when?"
 
-[Chorus]
+<span class="section-tag">[Chorus]</span>
 Now you’re acting like a crazy ex-girlfriend
 But baby we never even began
 You’re questioning my movements, asking where I’ve been
 Creating all this drama for a show we’re not in...
 
-[Bridge // WILD WEST PROTOCOL]
+<span class="section-tag">[Bridge // WILD WEST PROTOCOL]</span>
 You think you’re the sheriff in the Wild Wild West
 Trying to put my loyalty to the test
 But the sun already set on us, can’t you see?
 You don't get to keep the heart you handed back to me.
 
-[Outro]
+<span class="section-tag">[Outro]</span>
 This is the Wild Wild West, Jenn.
 Robotacus out.
-> END OF FILE_
+> END OF TRANSMISSION_
+            </div>
+        </div>
+
+        <footer>
+            <pre style="font-size: 0.6rem; line-height: 1;">
+      |\      _,,,---,,_
+ZZZzz /,`.-'`'    -.  ;-;;,_
+     |,4-  ) )-,_. ,\ (  `'-'
+    '---''(_/--'  `-'\_)  
+   [ CatGPT SYSTEM MONITORING ]
+            </pre>
+            <p>&copy; 2026 Robotacus. Built on GitHub.</p>
+        </footer>
+
     </div>
 
-    <footer>
-        <p>&copy; 2026 Robotacus Music. All Rights Reserved.</p>
-        <p>Security protocols monitored by <strong>CatGPT</strong>.</p>
-    </footer>
+    <!-- Hidden Audio Element -->
+    <!-- RENAME YOUR FILE TO nextgen.mp3 -->
+    <audio id="audio-source" src="nextgen.mp3"></audio>
 
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+        const audio = document.getElementById('audio-source');
+        const playBtn = document.getElementById('play-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const statusText = document.getElementById('player-status');
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+
+        // Play Button Logic
+        playBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                playBtn.innerHTML = "[ COMMAND: PAUSE ]";
+                statusText.innerHTML = "> STATUS: PLAYING [NEXT GEN]";
+                statusText.classList.add('blink');
+                visualizerActive = true;
+                drawVisualizer();
+            } else {
+                audio.pause();
+                playBtn.innerHTML = "[ EXECUTE: RESUME ]";
+                statusText.innerHTML = "> STATUS: PAUSED";
+                statusText.classList.remove('blink');
+                visualizerActive = false;
+            }
+        });
+
+        // Stop Button Logic
+        stopBtn.addEventListener('click', () => {
+            audio.pause();
+            audio.currentTime = 0;
+            playBtn.innerHTML = "[ EXECUTE: PLAY_TRACK ]";
+            statusText.innerHTML = "> STATUS: TERMINATED";
+            statusText.classList.remove('blink');
+            visualizerActive = false;
+            // Clear Visualizer
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Progress Bar Update
+        audio.addEventListener('timeupdate', () => {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = percent + '%';
+        });
+
+        // Click on Progress Bar to Seek
+        progressContainer.addEventListener('click', (e) => {
+            const width = progressContainer.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            audio.currentTime = (clickX / width) * duration;
+        });
+
+        // --- SIMULATED VISUALIZER (No CORS issues) ---
+        // Since real audio analysis on local files can be tricky with browser security,
+        // we simulate a cool "bar graph" effect that syncs to the 'idea' of music.
+        
+        let visualizerActive = false;
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 60;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawVisualizer() {
+            if (!visualizerActive) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const bars = 30;
+            const barWidth = canvas.width / bars;
+
+            ctx.fillStyle = '#00ff41'; // Terminal Green
+
+            for (let i = 0; i < bars; i++) {
+                // Generate random height for glitchy effect
+                const h = Math.random() * canvas.height * 0.8; 
+                const x = i * barWidth;
+                const y = canvas.height - h;
+                
+                // Draw bar
+                ctx.fillRect(x + 1, y, barWidth - 2, h);
+            }
+
+            requestAnimationFrame(drawVisualizer);
+        }
+
+        // Typewriter Effect for Title on Load
+        const title = document.querySelector('h1');
+        const originalText = title.innerText;
+        title.innerText = "";
+        let i = 0;
+        
+        function typeWriter() {
+            if (i < originalText.length) {
+                title.innerText += originalText.charAt(i);
+                i++;
+                setTimeout(typeWriter, 100);
+            }
+        }
+        
+        window.onload = typeWriter;
+
+    </script>
 </body>
 </html>

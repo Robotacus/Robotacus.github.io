@@ -3,64 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROBOTACUS // NEXT GEN</title>
+    <title>Contact Robotacus</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #000000; /* Pure Black */
-            --terminal-green: #0f0;
-            --alert-red: #ff3333;
-            --dim-gray: #333;
-            --font-main: 'Courier New', Courier, monospace;
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--terminal-green);
-            font-family: var(--font-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
         }
-
-        /* Glitch Title Effect */
-        h1 {
-            font-size: 2.5rem;
-            text-transform: uppercase;
-            text-shadow: 2px 2px var(--alert-red);
-            margin-bottom: 10px;
-            letter-spacing: 5px;
-            animation: glitch 1s infinite alternate;
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
         }
-
-        @keyframes glitch {
-            0% { text-shadow: 2px 2px var(--alert-red); }
-            50% { text-shadow: -2px -2px var(--alert-red); opacity: 0.8; }
-            100% { text-shadow: 2px -2px var(--alert-red); }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
         }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
 
-        .status-line {
-            border-bottom: 1px solid var(--terminal-green);
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-            font-size: 0.9rem;
-        }
+    <!-- Main Container -->
+    <div class="bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+        
+        <!-- Header Section -->
+        <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-8 text-center">
+            <div class="inline-block p-3 rounded-full bg-white/10 mb-4 backdrop-blur-sm border border-white/10">
+                <i class="fas fa-paper-plane text-white text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Get in Touch</h1>
+            <p class="text-blue-200 text-sm">Send a message directly to Robotacus</p>
+        </div>
 
-        .blink { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
+        <!-- Form Section -->
+        <div class="p-8">
+            <!-- 
+                FORM CONFIGURATION
+            -->
+            <form action="https://formsubmit.co/robotacus@hotmail.com" method="POST" class="space-y-6">
+                
+                <!-- Configuration for FormSubmit -->
+                <input type="hidden" name="_subject" value="New Submission from robotacus.github.io!">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="https://robotacus.github.io/">
 
-        /* Cover Art Placeholder */
-        .cover-art {
-            width: 300px;
-            height: 300px;
-            border: 2px solid var(--terminal-green);
-            background: #111;
-            display: flex;
+                <!-- Message Input -->
+                <div>
+                    <label for="message" class="block text-sm font-medium text-slate-300 mb-2">Message</label>
+                    <textarea name="message" id="message" rows="4" required
+                        class="block w-full p-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-transparent focus:outline-none"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                    class="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg shadow-blue-900/50">
+                    <span>Send</span>
+                    <i class="fas fa-arrow-right text-sm"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-slate-900/50 p-4 text-center border-t border-slate-700/50">
+            <p class="text-xs text-slate-500">&copy; Robotacus. All rights reserved.</p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;

@@ -1,92 +1,345 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Robotacus</title>
-    <!-- Tailwind CSS for styling -->
+    <title>RDSP Maximizer: Dark Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .speak-btn {
+            opacity: 0.7;
+            transition: all 0.2s;
+            cursor: pointer;
+            background-color: #374151; /* gray-700 */
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #E5E7EB;
+            margin-bottom: 8px;
+        }
+        .speak-btn:hover { opacity: 1; background-color: #4B5563; transform: scale(1.05); }
+        .speaking { background-color: #10B981 !important; color: white !important; }
+    </style>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3b82f6',
-                        secondary: '#1e40af',
-                    }
-                }
+        let currentUtterance = null;
+
+        function speak(text, btnElement) {
+            // Cancel any current speech
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
             }
+
+            // If we clicked the active button, just stop (toggle off)
+            if (btnElement.classList.contains('speaking')) {
+                btnElement.classList.remove('speaking');
+                return;
+            }
+
+            // Reset all buttons
+            document.querySelectorAll('.speak-btn').forEach(b => b.classList.remove('speaking'));
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+
+            utterance.onend = () => {
+                btnElement.classList.remove('speaking');
+            };
+
+            btnElement.classList.add('speaking');
+            window.speechSynthesis.speak(utterance);
         }
     </script>
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Custom scrollbar for dark theme */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569; 
-        }
-    </style>
 </head>
-<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-900 text-gray-100">
 
-    <!-- Main Container -->
-    <div class="bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
-        
-        <!-- Header Section -->
-        <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-8 text-center">
-            <div class="inline-block p-3 rounded-full bg-white/10 mb-4 backdrop-blur-sm border border-white/10">
-                <i class="fas fa-paper-plane text-white text-3xl"></i>
+    <!-- Navigation -->
+    <nav class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">🌱</span>
+                    <span class="font-bold text-xl tracking-tight text-white">RDSP<span class="text-green-400">Maximizer</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Overview</a>
+                        <a href="#phase1" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">🏃 Phase 1</a>
+                        <a href="#phase2" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">🛳️ Phase 2</a>
+                        <a href="#phase3" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">📈 Phase 3</a>
+                    </div>
+                </div>
             </div>
-            <h1 class="text-3xl font-bold text-white mb-2">Get in Touch</h1>
-            <p class="text-blue-200 text-sm">Send a message directly to Robotacus</p>
         </div>
+    </nav>
 
-        <!-- Form Section -->
-        <div class="p-8">
-            <!-- 
-                FORM CONFIGURATION
-            -->
-            <form action="https://formsubmit.co/robotacus@hotmail.com" method="POST" class="space-y-6">
-                
-                <!-- Configuration for FormSubmit -->
-                <input type="hidden" name="_subject" value="New Submission from robotacus.github.io!">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="_next" value="https://robotacus.github.io/">
+    <!-- Hero Section -->
+    <header id="overview" class="relative bg-gray-900 overflow-hidden">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 text-center">
+            
+            <button class="speak-btn mb-4" onclick="speak('The 7 Year Sprint Plan. A strategic roadmap to maximize your Disability Tax Credit benefits starting at age 43.', this)">
+                🔊 Read Intro
+            </button>
 
-                <!-- Message Input -->
-                <div>
-                    <label for="message" class="block text-sm font-medium text-slate-300 mb-2">Message</label>
-                    <textarea name="message" id="message" rows="4" required
-                        class="block w-full p-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-transparent focus:outline-none"></textarea>
+            <h1 class="text-4xl font-extrabold text-white sm:text-5xl sm:tracking-tight lg:text-6xl">
+                The 7-Year Sprint Plan 🏃💨
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-400">
+                A strategic roadmap to maximize your Disability Tax Credit benefits starting at age 43.
+            </p>
+            
+            <div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <!-- Card 1 -->
+                <div class="bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+                    <div class="text-4xl mb-2">💰</div>
+                    <dt class="text-sm font-medium text-green-400 truncate">Total Projected Value</dt>
+                    <dd class="mt-1 text-3xl font-bold text-white">~$190,000</dd>
+                    <dd class="text-xs text-gray-500 mt-1">at Age 60</dd>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+                    <div class="text-4xl mb-2">🏦</div>
+                    <dt class="text-sm font-medium text-blue-400 truncate">Your Total Input</dt>
+                    <dd class="mt-1 text-3xl font-bold text-white">~$25,500</dd>
+                    <dd class="text-xs text-gray-500 mt-1">Over 7 Years</dd>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+                    <div class="text-4xl mb-2">🎁</div>
+                    <dt class="text-sm font-medium text-purple-400 truncate">Free Gov. Money</dt>
+                    <dd class="mt-1 text-3xl font-bold text-white">~$76,500</dd>
+                    <dd class="text-xs text-gray-500 mt-1">Grants + Bonds</dd>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Phase 1: The Catch Up -->
+    <section id="phase1" class="py-12 bg-gray-800 border-y border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center mb-10">
+                <button class="speak-btn" onclick="speak('Phase 1. The Catch Up Sprint. Ages 43 to 47. We are aggressively claiming the maximum $10,500 annual grant limit using the 10 year carry forward rule.', this)">
+                    🔊 Read Section
+                </button>
+                <h2 class="text-base text-green-400 font-semibold tracking-wide uppercase">Ages 43-47</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Phase 1: The "Catch-Up" Sprint 🥵
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-400 lg:mx-auto">
+                    Aggressively claiming the maximum $10,500 annual grant limit using the 10-year carry-forward rule.
+                </p>
+            </div>
+
+            <!-- Mechanic Explainer -->
+            <div class="bg-gray-900 border-l-4 border-blue-500 p-5 mb-8 rounded-r-lg shadow-md">
+                <div class="flex flex-col sm:flex-row">
+                    <div class="flex-shrink-0 text-3xl mb-2 sm:mb-0 sm:mr-4">ℹ️</div>
+                    <div>
+                        <button class="speak-btn" onclick="speak('How it works: The $10,500 Cap. Normally, the max grant is $3,500 per year. However, you have unused grants from the last 10 years. By contributing more now, we trigger the Carry Forward provision, allowing you to claim up to the legal maximum of $10,500 per year until your backlog is empty.', this)">
+                            🔊 Read Explanation
+                        </button>
+                        <h3 class="text-lg font-medium text-blue-400">How it works: The $10,500 Cap</h3>
+                        <div class="mt-2 text-gray-300">
+                            <p>Normally, the max grant is $3,500/year. However, you have unused grants from the last 10 years. By contributing more now, we trigger the "Carry Forward" provision, allowing you to claim up to the legal maximum of <strong>$10,500 per year</strong> until your backlog is empty.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Year (Age)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Monthly Input</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Annual Total</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-green-400 uppercase tracking-wider">Gov. Grant</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-400 uppercase tracking-wider">Gov. Bond</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Est. Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-800 divide-y divide-gray-700">
+                        <!-- Year 1 -->
+                        <tr class="bg-gray-750 hover:bg-gray-700 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 1 (43)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-400 font-bold">$292</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$3,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">+$10,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400 font-bold">+$11,000*</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-bold">$25,000 🚀</td>
+                        </tr>
+                        <!-- Year 2 -->
+                        <tr class="hover:bg-gray-700 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 2 (44)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$334</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$4,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$41,300</td>
+                        </tr>
+                        <!-- Year 3 -->
+                        <tr class="hover:bg-gray-700 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 3 (45)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$417</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$5,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$58,600</td>
+                        </tr>
+                        <!-- Year 4 -->
+                        <tr class="hover:bg-gray-700 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 4 (46)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$417</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$5,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$76,500</td>
+                        </tr>
+                        <!-- Year 5 -->
+                        <tr class="hover:bg-gray-700 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 5 (47)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$417</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$5,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$94,800</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">*Year 1 Bond includes $10,000 retroactive payment + $1,000 for current year.</p>
+        </div>
+    </section>
+
+    <!-- Phase 2: Coasting -->
+    <section id="phase2" class="py-12 bg-gray-900 border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-8">
+                <button class="speak-btn" onclick="speak('Phase 2. The Coasting Phase. Ages 48 to 49. Catch-up room is exhausted. We return to standard contribution amounts.', this)">
+                    🔊 Read Section
+                </button>
+                <h2 class="text-3xl font-bold leading-7 text-white">Phase 2: The Coasting Phase 🛳️</h2>
+                <p class="mt-2 text-gray-400">Catch-up room is exhausted. We return to standard contribution amounts.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                 <div class="bg-gray-800 shadow-lg rounded-lg p-6 border border-gray-700">
+                    <h3 class="text-lg leading-6 font-medium text-white mb-4">The Schedule</h3>
+                    <table class="min-w-full">
+                        <tbody class="text-sm">
+                            <tr class="border-b border-gray-700">
+                                <td class="py-3 text-gray-300">Year 6 (48)</td>
+                                <td class="py-3 font-bold text-yellow-400">$125/mo</td>
+                                <td class="py-3 text-green-400">+$3,500</td>
+                                <td class="py-3 text-white">$103,000</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 text-gray-300">Year 7 (49)</td>
+                                <td class="py-3 font-bold text-yellow-400">$125/mo</td>
+                                <td class="py-3 text-green-400">+$3,500</td>
+                                <td class="py-3 text-white">$112,000</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <!-- Submit Button -->
-                <button type="submit" 
-                    class="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg shadow-blue-900/50">
-                    <span>Send</span>
-                    <i class="fas fa-arrow-right text-sm"></i>
-                </button>
-            </form>
+                <div class="bg-gray-900 border-l-4 border-red-500 p-6 rounded-r-lg shadow-md">
+                     <button class="speak-btn" onclick="speak('The Age 49 Cut Off. The year you turn 49 is the final year the government contributes any money. On December 31st of your 49th year, grants and bonds stop forever. After this date, you should stop contributing, as you will no longer receive the 300% match.', this)">
+                        🔊 Read Warning
+                     </button>
+                     <h3 class="text-lg font-medium text-red-400"><span class="mr-2">🛑</span>The Age 49 Cut-Off</h3>
+                     <p class="mt-2 text-sm text-gray-300">
+                         The year you turn 49 is the <strong>final year</strong> the government contributes any money. 
+                         <br><br>
+                         On December 31st of your 49th year, grants and bonds stop forever. After this date, you should stop contributing, as you will no longer receive the 300% match.
+                     </p>
+                </div>
+            </div>
         </div>
+    </section>
 
-        <!-- Footer -->
-        <div class="bg-slate-900/50 p-4 text-center border-t border-slate-700/50">
-            <p class="text-xs text-slate-500">&copy; Robotacus. All rights reserved.</p>
+    <!-- Phase 3: Growth -->
+    <section id="phase3" class="py-16 bg-gray-800 border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <button class="speak-btn" onclick="speak('Phase 3. The Growth Phase. Ages 50 to 60. No new contributions. We let compound interest do the heavy lifting.', this)">
+                    🔊 Read Section
+                </button>
+                <h2 class="text-3xl font-extrabold text-white">Phase 3: The Growth Phase 📈</h2>
+                <p class="mt-4 text-lg text-gray-400">No new contributions. We let compound interest do the heavy lifting.</p>
+            </div>
+
+            <div class="mt-12 grid gap-5 max-w-lg mx-auto lg:grid-cols-3 lg:max-w-none">
+                <!-- Age 50 -->
+                <div class="bg-gray-700 rounded-lg shadow-lg border border-gray-600 overflow-hidden">
+                    <div class="p-6">
+                        <p class="text-sm font-medium text-blue-400">Age 50</p>
+                        <div class="block mt-2">
+                            <p class="text-xl font-semibold text-white">$117,600 🥚</p>
+                            <p class="mt-3 text-base text-gray-400">Interest Earned: ~$5,600</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Age 55 -->
+                <div class="bg-gray-700 rounded-lg shadow-xl border border-blue-500 overflow-hidden transform scale-105 z-10">
+                    <div class="p-6">
+                        <p class="text-sm font-medium text-blue-400">Age 55</p>
+                        <div class="block mt-2">
+                            <p class="text-2xl font-bold text-white">$149,700 🐣</p>
+                            <p class="mt-3 text-base text-gray-400">Interest Earned: ~$7,100</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Age 60 -->
+                <div class="bg-gray-700 rounded-lg shadow-lg border border-gray-600 overflow-hidden">
+                    <div class="p-6">
+                        <p class="text-sm font-medium text-blue-400">Age 60 (Withdrawal)</p>
+                        <div class="block mt-2">
+                            <p class="text-xl font-semibold text-white">$190,000+ 🐓</p>
+                            <p class="mt-3 text-base text-gray-400">Interest Earned: ~$8,600</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Rule -->
+            <div class="mt-12 bg-gray-900 border border-yellow-600 rounded-lg p-6 flex flex-col sm:flex-row items-start shadow-lg">
+                <div class="text-3xl mr-4 mb-2 sm:mb-0">⚠️</div>
+                <div>
+                    <button class="speak-btn" onclick="speak('The 10 Year Rule. Crucial Warning. To keep all the government grants and bonds, which is about $76,000 in free money, you must wait 10 years after the last government deposit before making a withdrawal. Since your last grant arrives at Age 49, you must wait until Age 59 or 60 to withdraw without penalty. This timing is perfect for retirement income.', this)">
+                        🔊 Read Warning
+                    </button>
+                    <h3 class="text-lg font-medium text-yellow-400">The 10-Year Rule (Crucial)</h3>
+                    <p class="mt-2 text-gray-300 text-sm leading-relaxed">
+                        To keep all the government grants and bonds (the ~$76,500 free money), you must wait <strong>10 years</strong> after the last government deposit before making a withdrawal. 
+                        <br><br>
+                        Since your last grant arrives at Age 49, you must wait until Age 59/60 to withdraw without penalty. This timing is perfect for retirement income.
+                    </p>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black text-gray-500 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0 text-center md:text-left">
+                <span class="font-bold text-lg text-white">RDSP<span class="text-green-400">Maximizer</span></span>
+                <p class="text-sm text-gray-600 mt-2">Planning for financial independence. 🏁</p>
+            </div>
+            <div class="text-sm text-gray-600">
+                *Estimates based on max entitlements and 5% annual growth.
+            </div>
+        </div>
+    </footer>
 
 </body>
 </html>
-
-
 

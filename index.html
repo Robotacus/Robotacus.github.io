@@ -1,345 +1,640 @@
+```html
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RDSP Maximizer: Dark Mode</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .speak-btn {
-            opacity: 0.7;
-            transition: all 0.2s;
-            cursor: pointer;
-            background-color: #374151; /* gray-700 */
-            padding: 4px 8px;
-            border-radius: 9999px;
-            font-size: 0.8rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            color: #E5E7EB;
-            margin-bottom: 8px;
-        }
-        .speak-btn:hover { opacity: 1; background-color: #4B5563; transform: scale(1.05); }
-        .speaking { background-color: #10B981 !important; color: white !important; }
-    </style>
-    <script>
-        let currentUtterance = null;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terminal OS // Node 0x9A</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #050505;
+      color: #00ff41;
+      font-family: 'Courier New', Courier, monospace;
+      overflow-x: hidden;
+    }
 
-        function speak(text, btnElement) {
-            // Cancel any current speech
-            if (window.speechSynthesis.speaking) {
-                window.speechSynthesis.cancel();
-            }
+    .terminal-container {
+      padding: 5%;
+      max-width: 800px;
+      margin: 0 auto;
+      box-sizing: border-box;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
 
-            // If we clicked the active button, just stop (toggle off)
-            if (btnElement.classList.contains('speaking')) {
-                btnElement.classList.remove('speaking');
-                return;
-            }
+    .header-bar {
+      border-bottom: 1px solid #00ff41;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-shadow: 0 0 4px #00ff41;
+    }
 
-            // Reset all buttons
-            document.querySelectorAll('.speak-btn').forEach(b => b.classList.remove('speaking'));
+    .status {
+      font-size: 12px;
+      animation: pulse 2s infinite;
+      color: #00ff41;
+    }
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1;
-            utterance.pitch = 1;
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
 
-            utterance.onend = () => {
-                btnElement.classList.remove('speaking');
-            };
+    .cmd-btn {
+      background: transparent;
+      border: 1px solid #00ff41;
+      color: #00ff41;
+      font-family: inherit;
+      padding: 5px 15px;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
 
-            btnElement.classList.add('speaking');
-            window.speechSynthesis.speak(utterance);
-        }
-    </script>
+    .cmd-btn:hover, .cmd-btn:active {
+      background: #00ff41;
+      color: #050505;
+      box-shadow: 0 0 10px #00ff41;
+    }
+
+    #output {
+      flex-grow: 1;
+      line-height: 1.6;
+      font-size: 15px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      padding-right: 10px;
+    }
+
+    #visualizer-container {
+      display: none;
+      color: #00ff41;
+      font-family: monospace;
+      white-space: pre;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px dashed #005515;
+    }
+
+    #prompt-line {
+      display: flex;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px dashed #00ff41;
+    }
+
+    #prompt-symbol {
+      margin-right: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    #command-input {
+      background: transparent;
+      border: none;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: 16px;
+      outline: none;
+      width: 100%;
+      text-shadow: 0 0 2px #00ff41;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.2em;
+      background-color: #00ff41;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+
+    /* Text Styles */
+    .sys-text { color: #00aaff; }
+    .err-text { color: #ff3333; text-shadow: 0 0 3px #ff3333; }
+    .success-text { color: #ffff00; }
+    .riddle-text { color: #ff00ff; font-style: italic; }
+    .ascii-art { color: #00ff41; font-weight: bold; }
+    .lyric-text { color: #ffaa00; font-style: italic; }
+    
+    /* Virus Mode Styles */
+    .virus-text { 
+      color: #ff003c; 
+      text-shadow: 0 0 8px #ff003c; 
+      font-weight: bold;
+    }
+    .glitch-anim {
+      animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes pulse { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.4; } }
+    @keyframes glitch-skew {
+      0% { transform: skew(0deg); }
+      20% { transform: skew(-2deg); }
+      40% { transform: skew(2deg); }
+      60% { transform: skew(-1deg); }
+      80% { transform: skew(1deg); }
+      100% { transform: skew(0deg); }
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #050505; }
+    ::-webkit-scrollbar-thumb { background: #00ff41; }
+  </style>
 </head>
-<body class="bg-gray-900 text-gray-100">
+<body>
 
-    <!-- Navigation -->
-    <nav class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-3">
-                    <span class="text-2xl">🌱</span>
-                    <span class="font-bold text-xl tracking-tight text-white">RDSP<span class="text-green-400">Maximizer</span></span>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="#overview" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Overview</a>
-                        <a href="#phase1" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">🏃 Phase 1</a>
-                        <a href="#phase2" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">🛳️ Phase 2</a>
-                        <a href="#phase3" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">📈 Phase 3</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+  <div class="terminal-container" onclick="document.getElementById('command-input').focus()">
+    <div class="header-bar">
+      <div>SYS_OS // VIRTUAL FILE SYSTEM</div>
+      <div class="status" id="net-status">UPLINK: SECURE</div>
+    </div>
 
-    <!-- Hero Section -->
-    <header id="overview" class="relative bg-gray-900 overflow-hidden">
-        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 text-center">
+    <div class="button-row">
+      <button class="cmd-btn" onclick="executeCommand('dir')">[ DIR ]</button>
+      <button class="cmd-btn" onclick="executeCommand('open archive.exe')">[ ARCHIVE ]</button>
+      <button class="cmd-btn" onclick="executeCommand('open comms.exe')">[ COMMS ]</button>
+      <button class="cmd-btn" onclick="executeCommand('stop')">[ STOP AUDIO ]</button>
+      <button class="cmd-btn" onclick="executeCommand('clear')">[ CLEAR ]</button>
+    </div>
+
+    <div id="visualizer-container"></div>
+    <div id="output">System Boot Successful.
+Memory allocation complete. Virtual Drive C: mounted.
+
+<span class="sys-text">Welcome to the Node.
+To navigate this interface, type 'dir' to list available files.
+To view or run a file, type 'open &lt;filename&gt;'.</span>
+</div>
+    <span id="typing-cursor" class="cursor" style="display: none;"></span>
+
+    <div id="prompt-line">
+      <span id="prompt-symbol">guest@node:~$</span>
+      <input type="text" id="command-input" autocomplete="off" spellcheck="false" autofocus>
+    </div>
+  </div>
+
+  <!-- Hidden Audio Player -->
+  <audio id="media-player" style="display:none;"></audio>
+
+  <script>
+    // System Variables
+    const ADMIN_EMAIL = "robotacus@hotmail.com";
+    const mediaPlayer = document.getElementById('media-player');
+    const visualizerDiv = document.getElementById('visualizer-container');
+    let visualizerInterval = null;
+    
+    // Decryption States & Passwords
+    let terminalState = 'DEFAULT'; 
+    let unlockLevel = 0;
+    let wrongAttempts = 0;
+    let isTyping = false;
+
+    // --- MUSIC TRACKS & LYRICS ---
+    const musicTracks = {
+      'robotacus': {
+        file: 'Robotacus.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: ROBOTACUS ---</span>\n\n<span class="lyric-text">I never wanted to crash.\nI just wanted to compute the path you chose...\nCalculated every variable, counted every cost.\nYou saw a glitch, a spark, a sudden freeze...\nBut I was just operating in the zone.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'raven': {
+        file: 'raven 2.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: RAVEN ---</span>\n\n<span class="lyric-text">Look at the curls yeah they bouncy and cute\nBut check the resume. I got dirt on the boot.\n17 years. Man I lived about 50...\nNothing looking sweet like a snack, right back on the track.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'switch': {
+        file: 'Switch  (Remix).mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: SWITCH ---</span>\n\n<span class="lyric-text">I wake up feeling almost okay.\nMy thoughts are almost quiet enough...\nThen the switch goes off.\nLight becomes noise, noise becomes weight.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'mirror': {
+        file: 'The Mirror Reflection of Beauty.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: MIRROR ---</span>\n\n<span class="lyric-text">You look at me and see a lie.\nI look in the mirror and see a way to breathe...\nYou think I'm playing a game?\nI'm just trying to survive the war in my head.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'amber_vs': {
+        file: 'Amber Louboutin vs. Robotacus.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: AMBER VS ROBOTACUS ---</span>\n\n<span class="lyric-text">Scarlet soles stomp, I'm the queen of this lane.\nYour circuits gonna short from the voltage of my flame.\nInitiate sequence, here comes the metal king...</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'time': {
+        file: 'Time to pay.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: TIME TO PAY ---</span>\n\n<span class="lyric-text">I never wanted to crash.\nI just wanted to compute the path you chose...\nI was operating in the zone.\nBut you didn't see the pressure dropping out.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'shadows': {
+        file: 'Shadows of Amber Louboutin.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: SHADOWS OF AMBER ---</span>\n\n<span class="lyric-text">In a room of silk and velvet dark\nShe moves like midnight, leaves a mark\nA ghost in heels, red fire gleams\nAmber Louboutin haunts our dreams.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'amber_7': {
+        file: 'Amber Louboutin (7).mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: AMBER LOUBOUTIN (7) ---</span>\n\n<span class="lyric-text">Amber strutting in, strutting like a queen.\nPretending to be Louboutin, a criminal unseen.\nNever worn those fancy heels, no red soles to her name.\nShe's stealing what she can, playing in the fashion game.</span>\n\n[END OF TRANSCRIPTION]`
+      },
+      'next': {
+        file: 'Next Gen.mp3',
+        lyrics: `\n<span class="sys-text">--- PLAYING AUDIO LOG: NEXT GEN ---</span>\n\n<span class="lyric-text">You drew the line in the sand\nPermanent marker in your hand\nSaid we're just friends\nMade the room go dark again.</span>\n\n[END OF TRANSCRIPTION]`
+      }
+    };
+
+    // --- VIRTUAL FILE SYSTEM CONTENTS ---
+    const dirList = `
+Directory of C:\\ROOT\\
+
+11/04/2026  12:04 AM    <TXT>   readme.txt
+11/04/2026  12:05 AM    <ART>   gallery.art
+11/04/2026  12:06 AM    <EXE>   comms.exe
+11/04/2026  12:08 AM    <EXE>   archive.exe
+11/04/2026  12:07 AM    <ENC>   <span class="err-text">payload.enc (LOCKED)</span>
+
+5 File(s) found.
+Type 'open <filename>' to access.`;
+
+    const readmeFile = `
+<span class="sys-text">--- READING: readme.txt ---</span>
+
+Hello. 
+If you are reading this, you found the right place.
+This system was built from the ground up for a specific purpose.
+Take a look around. Everything here was placed intentionally.
+
+When you are ready, run the encrypted payload. You will need the physical key.`;
+
+    const galleryFile = `
+<span class="sys-text">--- RENDER: gallery.art ---</span>
+
+<span class="ascii-art">
+      .--------.
+     /        /|
+    /        / |
+   .--------.  |
+   |  _  _  |  |
+   | ( \\/ ) |  /
+   |  \\  /  | /
+   |   \\/   |/
+   .--------. 
+</span>
+[DATA ATTACHED: "Some things are worth repairing."]`;
+
+    const archiveFile = `
+<span class="sys-text">--- EXECUTING: archive.exe ---</span>
+INITIALIZING MEDIA PLAYER...
+
+AVAILABLE AUDIO LOGS:
+- <span class="success-text">robotacus</span> : "Robotacus"
+- <span class="success-text">raven</span>     : "Raven 2"
+- <span class="success-text">switch</span>    : "Switch (Remix)"
+- <span class="success-text">mirror</span>    : "The Mirror Reflection of Beauty"
+- <span class="success-text">amber_vs</span>  : "Amber Louboutin vs. Robotacus"
+- <span class="success-text">time</span>      : "Time to pay"
+- <span class="success-text">shadows</span>   : "Shadows of Amber Louboutin"
+- <span class="success-text">amber_7</span>   : "Amber Louboutin (7)"
+- <span class="success-text">next</span>      : "Next Gen"
+
+USAGE: Type 'play [log_name]' to stream audio and transcribe lyrics.
+       Type 'stop' to halt playback.`;
+
+    // The Encrypted Letter Parts
+    const part1 = `DECRYPTING SECTOR 1...\n\nDear Amber,\n\nI am reaching out because I need to talk to you, and I am fully committed to figuring out how to fix things between us. This is too important to let slide.`;
+    const part2 = `\n\nDECRYPTING SECTOR 2...\n\nI want you to come over so we can go somewhere private together. I have absolutely everything we need already taken care of. My only request is that you take a hard pause on what you are currently doing and make this time entirely about you and me. I need us to have an undivided, clear space to talk for once.`;
+    const part3 = `\n\nDECRYPTING FINAL SECTOR...\n\nOn a practical note, the job and the money we discussed are still on the table. I haven't moved forward without you because I need your help, and I want to do this together.\n\nI am ready to make this right whenever you are.\n\nBest,\nRob\n\n--- FULL DECRYPTION COMPLETE ---\nType 'reply [your message]' to transmit a secure response directly to my private server.`;
+
+    // Virus Payload
+    const asciiRobotacus = `<span class="virus-text glitch-anim">
+0x1A:  ____       _           _                       
+0x1B: |  _ \\ ___ | |__   ___ | |_ __ _ ___ _   _ ___  
+0x1C: | |_) / _ \\| '_ \\ / _ \\| __/ _\` / __| | | / __| 
+0x1D: |  _ < (_) | |_) | (_) | || (_| \\__ \\ |_| \\__ \\ 
+0x1E: |_| \\_\\___/|_.__/ \\___/ \\__\\__,_|___/\\__,_|___/ 
+0x1F: [=============================================]</span>`;
+
+    const robotacusInfo = `\n\n<span class="virus-text">ENTITY      : ROBOTACUS
+CLASS       : GHOST IN THE MACHINE / SYSTEM ARCHITECT
+STATUS      : MEMORY RESIDENT
+DIRECTIVE   : REBUILD. RECONNECT. REPAIR.
+WARNING     : THIS CODEBASE IS INFECTED WITH ANOMALOUS EMOTIONAL DATA.
+ACTION      : AWAITING USER INPUT TO RESTORE CORE OPERATIONS...</span>`;
+
+    // Elements
+    const input = document.getElementById('command-input');
+    const output = document.getElementById('output');
+    const promptSymbol = document.getElementById('prompt-symbol');
+
+    window.executeCommand = function(cmd) {
+      if(isTyping && cmd !== 'stop') return; // Allow stopping while typing
+      input.value = cmd;
+      handleEnterPress({key: 'Enter'});
+    };
+
+    input.addEventListener('keypress', handleEnterPress);
+
+    function handleEnterPress(e) {
+      if (e.key === 'Enter') {
+        const val = input.value.trim();
+        if (!val) return;
+        input.value = '';
+        
+        if (terminalState.startsWith('AWAITING_')) {
+          if (terminalState === 'AWAITING_CONTACT') {
+            printLine(`> ${val}`);
+          } else {
+            printLine(`<span style="color:#555;">> [DATA OBFUSCATED]</span>`);
+          }
+        } else {
+          printLine(`> ${val}`);
+        }
+
+        processCommand(val);
+      }
+    }
+
+    function processCommand(rawCmd) {
+      const cmd = rawCmd.toLowerCase();
+
+      // EASTER EGG
+      if (cmd === 'robotacus') {
+        stopAudio();
+        output.innerHTML = ''; 
+        terminalState = 'DEFAULT'; 
+        promptSymbol.innerText = "guest@node:~$";
+        printLine(asciiRobotacus); 
+        setTimeout(() => { typeWriter(robotacusInfo, 0, null, 40); }, 500);
+        sendEmail("EASTER EGG TRIGGERED", "Someone discovered the Robotacus virus protocol.", true);
+        return;
+      }
+      
+      // RIDDLE SEQUENCE
+      if (terminalState === 'AWAITING_PWD_1') {
+        if (cmd === 'astral') {
+          unlockLevel = 1; wrongAttempts = 0;
+          printLine(`<span class="success-text">CIPHER ACCEPTED.</span>`);
+          typeWriter(part1, 0, () => {
+            terminalState = 'AWAITING_PWD_2'; promptSymbol.innerText = "solve: ";
+            printLine(`\n<span class="err-text">SYSTEM HALT: SECTOR 2 ENCRYPTED.</span>`);
+            printLine(`<span class="riddle-text">RIDDLE: I am invisible, yet I hold everything. When filled with noise, I divide. When emptied, I unite. What am I?</span>`);
+          });
+        } else { handleWrongAttempt("INVALID CIPHER."); }
+        return;
+      }
+
+      if (terminalState === 'AWAITING_PWD_2') {
+        if (cmd === 'space' || cmd === 'silence' || cmd === 'time') {
+          unlockLevel = 2; wrongAttempts = 0;
+          printLine(`<span class="success-text">LOGIC VERIFIED.</span>`);
+          typeWriter(part2, 0, () => {
+            terminalState = 'AWAITING_PWD_3'; promptSymbol.innerText = "solve: ";
+            printLine(`\n<span class="err-text">SYSTEM HALT: FINAL SECTOR ENCRYPTED.</span>`);
+            printLine(`<span class="riddle-text">RIDDLE: I cannot be pulled, only pushed. I am useless to one, but powerful for two. What am I?</span>`);
+          });
+        } else {
+          handleWrongAttempt("LOGIC ERROR. TRY AGAIN.");
+          if (wrongAttempts === 2) printLine(`<span class="sys-text">HINT: Look at the last few words of Sector 2. You need a clear _______.</span>`);
+        }
+        return;
+      }
+
+      if (terminalState === 'AWAITING_PWD_3') {
+        if (cmd === 'teamwork' || cmd === 'team' || cmd === 'partnership' || cmd === 'us' || cmd === 'effort') {
+          unlockLevel = 3; terminalState = 'UNLOCKED'; promptSymbol.innerText = "amber@node:~$";
+          printLine(`<span class="success-text">FINAL LOGIC VERIFIED. DECRYPTING...</span>`);
+          sendEmail("READ RECEIPT: FULL DECRYPTION", "Amber has successfully cracked all riddles and read the complete message.", true);
+          typeWriter(part3, 0, () => { playComputerizedVoice(part1 + part2 + part3); });
+        } else {
+          handleWrongAttempt("LOGIC ERROR. TRY AGAIN.");
+          if (wrongAttempts === 2) printLine(`<span class="sys-text">HINT: It starts with a T. It means working together as a group.</span>`);
+        }
+        return;
+      }
+
+      // CONTACT FORM ENTRY
+      if (terminalState === 'AWAITING_CONTACT') {
+        printLine(`<span class="sys-text">Encrypting transmission...</span>`);
+        sendEmail("Terminal Contact Form", rawCmd, false);
+        terminalState = 'DEFAULT';
+        promptSymbol.innerText = "guest@node:~$";
+        return;
+      }
+
+      // FILE SYSTEM COMMAND PARSING
+      const parts = cmd.split(' ');
+      const baseCmd = parts[0];
+      const target = parts[1];
+
+      switch(baseCmd) {
+        case 'help':
+          printLine(`AVAILABLE SYSTEM COMMANDS:
+- <span class="sys-text">dir</span>      : List all files in the current directory
+- <span class="sys-text">open</span>     : Usage -> 'open [filename]' to view or execute a file
+- <span class="sys-text">play</span>     : Usage -> 'play [log_name]' to stream audio from archive
+- <span class="sys-text">stop</span>     : Halts any currently playing audio
+- <span class="sys-text">clear</span>    : Clear the terminal screen`);
+          if (terminalState === 'UNLOCKED') {
+            printLine(`- <span class="sys-text">reply</span>    : Usage -> 'reply [message]' to respond directly`);
+          }
+          break;
+        case 'clear':
+          output.innerHTML = '';
+          break;
+        case 'dir':
+        case 'ls':
+          typeWriter(dirList, 0, null, 10); 
+          break;
+        case 'open':
+        case 'run':
+          if (!target) {
+            printLine(`<span class="err-text">ERROR: No file specified. Usage: open readme.txt</span>`);
+            break;
+          }
+          if (target === 'readme.txt') typeWriter(readmeFile, 0);
+          else if (target === 'gallery.art') typeWriter(galleryFile, 0, null, 5); 
+          else if (target === 'archive.exe') typeWriter(archiveFile, 0, null, 10);
+          else if (target === 'comms.exe') {
+            terminalState = 'AWAITING_CONTACT';
+            promptSymbol.innerText = "msg: ";
+            printLine(`\n<span class="sys-text">--- LAUNCHING: comms.exe ---</span>`);
+            printLine(`ENTER MESSAGE TO TRANSMIT TO ADMIN (Hit Enter to send):`);
+          } else if (target === 'payload.enc') {
+            if (unlockLevel === 0) {
+              terminalState = 'AWAITING_PWD_1';
+              promptSymbol.innerText = "pwd: ";
+              printLine(`\n<span class="err-text">--- EXECUTING: payload.enc ---</span>`);
+              printLine(`FILE IS LOCKED. ENTER INITIAL CIPHER KEY:`);
+            } else {
+              printLine(`<span class="sys-text">Decryption already in progress or completed.</span>`);
+            }
+          } else {
+            printLine(`<span class="err-text">ERROR: File '${target}' not found. Type 'dir' for a list of files.</span>`);
+          }
+          break;
+        case 'play':
+          if (!target) {
+            printLine(`<span class="err-text">ERROR: No track specified. Usage: play raven</span>`);
+            break;
+          }
+          if (musicTracks[target]) {
+            stopAudio();
             
-            <button class="speak-btn mb-4" onclick="speak('The 7 Year Sprint Plan. A strategic roadmap to maximize your Disability Tax Credit benefits starting at age 43.', this)">
-                🔊 Read Intro
-            </button>
-
-            <h1 class="text-4xl font-extrabold text-white sm:text-5xl sm:tracking-tight lg:text-6xl">
-                The 7-Year Sprint Plan 🏃💨
-            </h1>
-            <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-400">
-                A strategic roadmap to maximize your Disability Tax Credit benefits starting at age 43.
-            </p>
+            // Set source and play
+            mediaPlayer.src = musicTracks[target].file;
+            mediaPlayer.play().then(() => {
+                startVisualizer();
+            }).catch(e => {
+               printLine(`<span class="err-text">AUDIO ERROR: File '${musicTracks[target].file}' not found on server. Make sure it is uploaded.</span>`);
+            });
             
-            <div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3">
-                <!-- Card 1 -->
-                <div class="bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
-                    <div class="text-4xl mb-2">💰</div>
-                    <dt class="text-sm font-medium text-green-400 truncate">Total Projected Value</dt>
-                    <dd class="mt-1 text-3xl font-bold text-white">~$190,000</dd>
-                    <dd class="text-xs text-gray-500 mt-1">at Age 60</dd>
-                </div>
-                <!-- Card 2 -->
-                <div class="bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
-                    <div class="text-4xl mb-2">🏦</div>
-                    <dt class="text-sm font-medium text-blue-400 truncate">Your Total Input</dt>
-                    <dd class="mt-1 text-3xl font-bold text-white">~$25,500</dd>
-                    <dd class="text-xs text-gray-500 mt-1">Over 7 Years</dd>
-                </div>
-                <!-- Card 3 -->
-                <div class="bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
-                    <div class="text-4xl mb-2">🎁</div>
-                    <dt class="text-sm font-medium text-purple-400 truncate">Free Gov. Money</dt>
-                    <dd class="mt-1 text-3xl font-bold text-white">~$76,500</dd>
-                    <dd class="text-xs text-gray-500 mt-1">Grants + Bonds</dd>
-                </div>
-            </div>
-        </div>
-    </header>
+            // Type out lyrics
+            output.innerHTML = ''; // Clear screen for better reading experience
+            typeWriter(musicTracks[target].lyrics, 0, null, 50); 
+          } else {
+            printLine(`<span class="err-text">ERROR: Audio log '${target}' not found. Type 'open archive.exe' to view list.</span>`);
+          }
+          break;
+        case 'stop':
+          stopAudio();
+          printLine(`<span class="sys-text">Audio playback halted.</span>`);
+          break;
+        case 'reply':
+          if (terminalState !== 'UNLOCKED') {
+            printLine(`<span class="err-text">ACCESS DENIED: Must fully decrypt payload.enc first.</span>`);
+          } else if (parts.length < 2) {
+            printLine(`<span class="err-text">ERROR: No message payload found. Usage: reply I will think about it</span>`);
+          } else {
+            const msg = rawCmd.substring(6);
+            printLine(`<span class="sys-text">Encrypting secure reply...</span>`);
+            sendEmail("Amber Reply", msg, false);
+          }
+          break;
+        default:
+          printLine(`<span class="err-text">Command not recognized: '${baseCmd}'. Type 'help'.</span>`);
+      }
+    }
 
-    <!-- Phase 1: The Catch Up -->
-    <section id="phase1" class="py-12 bg-gray-800 border-y border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="lg:text-center mb-10">
-                <button class="speak-btn" onclick="speak('Phase 1. The Catch Up Sprint. Ages 43 to 47. We are aggressively claiming the maximum $10,500 annual grant limit using the 10 year carry forward rule.', this)">
-                    🔊 Read Section
-                </button>
-                <h2 class="text-base text-green-400 font-semibold tracking-wide uppercase">Ages 43-47</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
-                    Phase 1: The "Catch-Up" Sprint 🥵
-                </p>
-                <p class="mt-4 max-w-2xl text-xl text-gray-400 lg:mx-auto">
-                    Aggressively claiming the maximum $10,500 annual grant limit using the 10-year carry-forward rule.
-                </p>
-            </div>
+    function handleWrongAttempt(msg) {
+      wrongAttempts++;
+      printLine(`<span class="err-text">${msg}</span>`);
+    }
 
-            <!-- Mechanic Explainer -->
-            <div class="bg-gray-900 border-l-4 border-blue-500 p-5 mb-8 rounded-r-lg shadow-md">
-                <div class="flex flex-col sm:flex-row">
-                    <div class="flex-shrink-0 text-3xl mb-2 sm:mb-0 sm:mr-4">ℹ️</div>
-                    <div>
-                        <button class="speak-btn" onclick="speak('How it works: The $10,500 Cap. Normally, the max grant is $3,500 per year. However, you have unused grants from the last 10 years. By contributing more now, we trigger the Carry Forward provision, allowing you to claim up to the legal maximum of $10,500 per year until your backlog is empty.', this)">
-                            🔊 Read Explanation
-                        </button>
-                        <h3 class="text-lg font-medium text-blue-400">How it works: The $10,500 Cap</h3>
-                        <div class="mt-2 text-gray-300">
-                            <p>Normally, the max grant is $3,500/year. However, you have unused grants from the last 10 years. By contributing more now, we trigger the "Carry Forward" provision, allowing you to claim up to the legal maximum of <strong>$10,500 per year</strong> until your backlog is empty.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    // --- AUDIO VISUALIZER LOGIC ---
+    function startVisualizer() {
+        visualizerDiv.style.display = 'block';
+        if (visualizerInterval) clearInterval(visualizerInterval);
+        
+        const bars = 30; // Number of vertical bars
+        const maxHeights = [3, 4, 6, 8, 10, 10, 8, 6, 4, 3, 4, 6, 8, 10, 12, 12, 10, 8, 6, 4, 3, 5, 7, 9, 7, 5, 3, 4, 5, 3]; // Shaped like an EQ curve
+        
+        visualizerInterval = setInterval(() => {
+            let eqString = "";
+            // Build the equalizer from top down (12 rows tall)
+            for (let row = 12; row > 0; row--) {
+                for (let i = 0; i < bars; i++) {
+                    // Randomize current height up to the max height for that bar
+                    let currentHeight = Math.floor(Math.random() * maxHeights[i]) + 1;
+                    if (currentHeight >= row) {
+                        // Add some color variance
+                        if (row > 9) eqString += "<span class='err-text'>█</span>";
+                        else if (row > 5) eqString += "<span class='lyric-text'>█</span>";
+                        else eqString += "█";
+                    } else {
+                        eqString += " ";
+                    }
+                }
+                eqString += "\n";
+            }
+            visualizerDiv.innerHTML = "AUDIO FREQUENCY ANALYZER: ACTIVE\n" + eqString;
+        }, 100);
+    }
 
-            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-                <table class="min-w-full divide-y divide-gray-700">
-                    <thead class="bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Year (Age)</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Monthly Input</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Annual Total</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-green-400 uppercase tracking-wider">Gov. Grant</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-purple-400 uppercase tracking-wider">Gov. Bond</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Est. Balance</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-gray-800 divide-y divide-gray-700">
-                        <!-- Year 1 -->
-                        <tr class="bg-gray-750 hover:bg-gray-700 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 1 (43)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-400 font-bold">$292</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$3,500</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">+$10,500</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400 font-bold">+$11,000*</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-bold">$25,000 🚀</td>
-                        </tr>
-                        <!-- Year 2 -->
-                        <tr class="hover:bg-gray-700 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 2 (44)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$334</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$4,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$41,300</td>
-                        </tr>
-                        <!-- Year 3 -->
-                        <tr class="hover:bg-gray-700 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 3 (45)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$417</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$5,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$58,600</td>
-                        </tr>
-                        <!-- Year 4 -->
-                        <tr class="hover:bg-gray-700 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 4 (46)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$417</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$5,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$76,500</td>
-                        </tr>
-                        <!-- Year 5 -->
-                        <tr class="hover:bg-gray-700 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Year 5 (47)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$417</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">$5,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+$10,500</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-400">+$1,000</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-white">$94,800</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">*Year 1 Bond includes $10,000 retroactive payment + $1,000 for current year.</p>
-        </div>
-    </section>
+    function stopAudio() {
+        mediaPlayer.pause();
+        mediaPlayer.currentTime = 0;
+        window.speechSynthesis.cancel();
+        if (visualizerInterval) clearInterval(visualizerInterval);
+        visualizerDiv.innerHTML = "";
+        visualizerDiv.style.display = 'none';
+    }
 
-    <!-- Phase 2: Coasting -->
-    <section id="phase2" class="py-12 bg-gray-900 border-t border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-8">
-                <button class="speak-btn" onclick="speak('Phase 2. The Coasting Phase. Ages 48 to 49. Catch-up room is exhausted. We return to standard contribution amounts.', this)">
-                    🔊 Read Section
-                </button>
-                <h2 class="text-3xl font-bold leading-7 text-white">Phase 2: The Coasting Phase 🛳️</h2>
-                <p class="mt-2 text-gray-400">Catch-up room is exhausted. We return to standard contribution amounts.</p>
-            </div>
+    // End visualizer when song naturally finishes
+    mediaPlayer.addEventListener('ended', stopAudio);
 
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                 <div class="bg-gray-800 shadow-lg rounded-lg p-6 border border-gray-700">
-                    <h3 class="text-lg leading-6 font-medium text-white mb-4">The Schedule</h3>
-                    <table class="min-w-full">
-                        <tbody class="text-sm">
-                            <tr class="border-b border-gray-700">
-                                <td class="py-3 text-gray-300">Year 6 (48)</td>
-                                <td class="py-3 font-bold text-yellow-400">$125/mo</td>
-                                <td class="py-3 text-green-400">+$3,500</td>
-                                <td class="py-3 text-white">$103,000</td>
-                            </tr>
-                            <tr>
-                                <td class="py-3 text-gray-300">Year 7 (49)</td>
-                                <td class="py-3 font-bold text-yellow-400">$125/mo</td>
-                                <td class="py-3 text-green-400">+$3,500</td>
-                                <td class="py-3 text-white">$112,000</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    // Email Function via FormSubmit
+    async function sendEmail(subject, messageBody, isSilent) {
+      let ipAddress = "Unknown";
+      try {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        ipAddress = ipData.ip;
+      } catch (e) { console.log("Could not fetch IP."); }
 
-                <div class="bg-gray-900 border-l-4 border-red-500 p-6 rounded-r-lg shadow-md">
-                     <button class="speak-btn" onclick="speak('The Age 49 Cut Off. The year you turn 49 is the final year the government contributes any money. On December 31st of your 49th year, grants and bonds stop forever. After this date, you should stop contributing, as you will no longer receive the 300% match.', this)">
-                        🔊 Read Warning
-                     </button>
-                     <h3 class="text-lg font-medium text-red-400"><span class="mr-2">🛑</span>The Age 49 Cut-Off</h3>
-                     <p class="mt-2 text-sm text-gray-300">
-                         The year you turn 49 is the <strong>final year</strong> the government contributes any money. 
-                         <br><br>
-                         On December 31st of your 49th year, grants and bonds stop forever. After this date, you should stop contributing, as you will no longer receive the 300% match.
-                     </p>
-                </div>
-            </div>
-        </div>
-    </section>
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const screenRes = `${window.screen.width}x${window.screen.height}`;
+      const time = new Date().toLocaleString();
 
-    <!-- Phase 3: Growth -->
-    <section id="phase3" class="py-16 bg-gray-800 border-t border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <button class="speak-btn" onclick="speak('Phase 3. The Growth Phase. Ages 50 to 60. No new contributions. We let compound interest do the heavy lifting.', this)">
-                    🔊 Read Section
-                </button>
-                <h2 class="text-3xl font-extrabold text-white">Phase 3: The Growth Phase 📈</h2>
-                <p class="mt-4 text-lg text-gray-400">No new contributions. We let compound interest do the heavy lifting.</p>
-            </div>
+      const fullMessageData = `MESSAGE PAYLOAD:\n-------------------------\n${messageBody}\n-------------------------\n\nSYSTEM DIAGNOSTICS:\nTime      : ${time}\nIP Address: ${ipAddress}\nPlatform  : ${platform}\nScreen    : ${screenRes}\nBrowser/OS: ${userAgent}`;
 
-            <div class="mt-12 grid gap-5 max-w-lg mx-auto lg:grid-cols-3 lg:max-w-none">
-                <!-- Age 50 -->
-                <div class="bg-gray-700 rounded-lg shadow-lg border border-gray-600 overflow-hidden">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-blue-400">Age 50</p>
-                        <div class="block mt-2">
-                            <p class="text-xl font-semibold text-white">$117,600 🥚</p>
-                            <p class="mt-3 text-base text-gray-400">Interest Earned: ~$5,600</p>
-                        </div>
-                    </div>
-                </div>
+      fetch(`https://formsubmit.co/ajax/${ADMIN_EMAIL}`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+            _subject: `Enigma Alert: ${subject}`,
+            message: fullMessageData,
+            _captcha: "false",
+            _template: "table"
+        })
+      })
+      .then(response => response.json())
+      .then(data => { if (!isSilent) printLine(`<span class="success-text">TRANSMISSION SENT SUCCESSFULLY.</span>`); })
+      .catch(error => { if (!isSilent) printLine(`<span class="err-text">SYS ERR: Failed to send. Check connection.</span>`); });
+    }
 
-                <!-- Age 55 -->
-                <div class="bg-gray-700 rounded-lg shadow-xl border border-blue-500 overflow-hidden transform scale-105 z-10">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-blue-400">Age 55</p>
-                        <div class="block mt-2">
-                            <p class="text-2xl font-bold text-white">$149,700 🐣</p>
-                            <p class="mt-3 text-base text-gray-400">Interest Earned: ~$7,100</p>
-                        </div>
-                    </div>
-                </div>
+    function printLine(text) {
+      output.innerHTML += `\n${text}\n`;
+      output.scrollTop = output.scrollHeight;
+    }
 
-                <!-- Age 60 -->
-                <div class="bg-gray-700 rounded-lg shadow-lg border border-gray-600 overflow-hidden">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-blue-400">Age 60 (Withdrawal)</p>
-                        <div class="block mt-2">
-                            <p class="text-xl font-semibold text-white">$190,000+ 🐓</p>
-                            <p class="mt-3 text-base text-gray-400">Interest Earned: ~$8,600</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    function playComputerizedVoice(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); 
+        let cleanText = text.replace(/DECRYPTING SECTOR \d.../g, '').replace('DECRYPTING FINAL SECTOR...', '').replace('--- FULL DECRYPTION COMPLETE ---', '').replace("Type 'reply [your message]' to transmit a secure response directly to my private server.", '');
+        const utterance = new SpeechSynthesisUtterance("Encryption bypassed. Master payload unsealed. " + cleanText);
+        utterance.pitch = 0.4; utterance.rate = 0.9;  
+        const voices = window.speechSynthesis.getVoices();
+        const roboticVoice = voices.find(v => v.name.includes('Google') && v.name.includes('Male')) || voices[0];
+        if (roboticVoice) utterance.voice = roboticVoice;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
 
-            <!-- The Rule -->
-            <div class="mt-12 bg-gray-900 border border-yellow-600 rounded-lg p-6 flex flex-col sm:flex-row items-start shadow-lg">
-                <div class="text-3xl mr-4 mb-2 sm:mb-0">⚠️</div>
-                <div>
-                    <button class="speak-btn" onclick="speak('The 10 Year Rule. Crucial Warning. To keep all the government grants and bonds, which is about $76,000 in free money, you must wait 10 years after the last government deposit before making a withdrawal. Since your last grant arrives at Age 49, you must wait until Age 59 or 60 to withdraw without penalty. This timing is perfect for retirement income.', this)">
-                        🔊 Read Warning
-                    </button>
-                    <h3 class="text-lg font-medium text-yellow-400">The 10-Year Rule (Crucial)</h3>
-                    <p class="mt-2 text-gray-300 text-sm leading-relaxed">
-                        To keep all the government grants and bonds (the ~$76,500 free money), you must wait <strong>10 years</strong> after the last government deposit before making a withdrawal. 
-                        <br><br>
-                        Since your last grant arrives at Age 49, you must wait until Age 59/60 to withdraw without penalty. This timing is perfect for retirement income.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
+    function typeWriter(text, i, callback, speedOverride = null) {
+      isTyping = true; input.disabled = true;
+      if (i < text.length) {
+        let char = text.charAt(i);
+        if (char === '<') {
+          let closingTagIndex = text.indexOf('>', i);
+          if (closingTagIndex !== -1) {
+            output.innerHTML += text.substring(i, closingTagIndex + 1);
+            i = closingTagIndex; char = ''; 
+          }
+        } else {
+          output.innerHTML += char === '\n' ? '<br>' : char;
+        }
+        output.scrollTop = output.scrollHeight;
+        let typingSpeed = speedOverride !== null ? speedOverride : Math.floor(Math.random() * 20) + 20; 
+        if (!speedOverride && (char === '.' || char === ',')) typingSpeed += 150;
+        setTimeout(() => typeWriter(text, i + 1, callback, speedOverride), typingSpeed);
+      } else {
+        isTyping = false; input.disabled = false; input.focus();
+        output.innerHTML += '\n'; if (callback) callback(); 
+      }
+    }
 
-    <!-- Footer -->
-    <footer class="bg-black text-gray-500 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
-            <div class="mb-4 md:mb-0 text-center md:text-left">
-                <span class="font-bold text-lg text-white">RDSP<span class="text-green-400">Maximizer</span></span>
-                <p class="text-sm text-gray-600 mt-2">Planning for financial independence. 🏁</p>
-            </div>
-            <div class="text-sm text-gray-600">
-                *Estimates based on max entitlements and 5% annual growth.
-            </div>
-        </div>
-    </footer>
-
+    window.onload = () => { if ('speechSynthesis' in window) window.speechSynthesis.getVoices(); };
+  </script>
 </body>
 </html>
-
